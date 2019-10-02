@@ -24,4 +24,6 @@ void clientThread(const int &thread_id, const int &thread_count, const Config &c
 	}
 
 	LOG_VERBOSE << "Shutdown client thread " << thread_id;
+
+	ev_run(loop, 0);
 }
