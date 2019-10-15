@@ -34,6 +34,8 @@ static void tcp_connect_cb(struct ev_loop *loop, struct ev_io *watcher,
 	} else {
 		// send_request(loop, domain);
 		LOG_VERBOSE << "Connect TCP socket in worker " << client->worker;
+		ev_io_stop(loop, &client->watcher);
+		ev_timer_stop(loop, &client->timer);
 		//close(client->watcher.fd);
 	}
 	tcp_session_reconnect(loop, client);
@@ -84,9 +86,7 @@ int tcp_connect_tout(struct ev_loop *loop, client_t *client,
 		if (errno != EINPROGRESS) {
 			int err = errno;
 			ev_io_stop(loop, &client->watcher);
-			ev_io_set(&client->watcher, -1, 0);
 
-			ev_io_stop(loop, &client->watcher);
 			ev_timer_stop(loop, &client->timer);
 
 			errno = err;
