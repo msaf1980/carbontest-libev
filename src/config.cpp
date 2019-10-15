@@ -10,7 +10,8 @@
 using std::string;
 
 std::atomic_bool running;
-Config config;
+Config           config;
+__thread char    errbuf[ERRBUF_SIZE];
 
 void parseArgs(Config &config, int argc, char *argv[]) {
 	cxxopts::Options options(
@@ -25,7 +26,7 @@ void parseArgs(Config &config, int argc, char *argv[]) {
 		("host", "IP Address to connect",
 	                      cxxopts::value<string>()->default_value("127.0.0.1"))
 		("port", "Port to connect",
-	                      cxxopts::value<int>()->default_value("2003"))
+	                      cxxopts::value<string>()->default_value("2003"))
 		("p,prefix", "Metric prefix",
 	                      cxxopts::value<string>()->default_value("test"))
 		("d,duration", "Test duration (in seconds)",
@@ -35,12 +36,12 @@ void parseArgs(Config &config, int argc, char *argv[]) {
 		("u,uworkers", "UDP workers", cxxopts::value<int>()->default_value("0"))
 		("m,metrics", "Metrics, sended in one TCP connection",
 	                      cxxopts::value<int>()->default_value("1"))
-		("D,delay", "Delay between send/connect attempts (in milliseconds)",
-	                      cxxopts::value<int>()->default_value("0"))
-		("c,con_timeout", "Connection timeout (in milliseconds)",
-	                      cxxopts::value<int>()->default_value("100"))
-		("t,timeout", "Timeout (in milliseconds)",
-	                      cxxopts::value<int>()->default_value("500"))
+		("D,delay", "Delay between send/connect attempts (in seconds)",
+	                      cxxopts::value<double>()->default_value("0"))
+		("c,con_timeout", "Connection timeout (in seconds)",
+	                      cxxopts::value<double>()->default_value("100"))
+		("t,timeout", "Timeout (in seconds)",
+	                      cxxopts::value<double>()->default_value("500"))
 		("f,file", "Write statistic to file",
 	                      cxxopts::value<string>()->default_value("test.csv"))
 	;
@@ -83,9 +84,10 @@ void parseArgs(Config &config, int argc, char *argv[]) {
 		config.Host = result[arg].as<string>();
 
 		arg = "port";
-		config.Port = result[arg].as<int>();
-		if (config.Port <= 0)
+		config.Port = result[arg].as<string>();
+		if (config.Port == "")
 			throw std::invalid_argument(arg);
+		config.address = NULL;
 
 		arg = "prefix";
 		config.MetricPrefix = result[arg].as<string>();
@@ -96,18 +98,18 @@ void parseArgs(Config &config, int argc, char *argv[]) {
 			throw std::invalid_argument(arg);
 
 		arg = "delay";
-		config.Delay = result[arg].as<int>();
+		config.Delay = result[arg].as<double>();
 		if (config.Delay < 0)
 			throw std::invalid_argument(arg);
 
 		arg = "con_timeout";
-		config.ConTimeout = result[arg].as<int>();
-		if (config.ConTimeout < 50)
+		config.ConTimeout = result[arg].as<double>();
+		if (config.ConTimeout < 0.05)
 			throw std::invalid_argument(arg);
 
 		arg = "timeout";
-		config.Timeout = result[arg].as<int>();
-		if (config.Timeout < 50)
+		config.Timeout = result[arg].as<double>();
+		if (config.Timeout < 0.05)
 			throw std::invalid_argument(arg);
 
 		arg = "loglevel";

@@ -12,6 +12,7 @@
 
 #include <fmt/format.h>
 
+#include <c_procs/errors.h>
 #include <c_procs/daemonutils.h>
 #include <threads/spinning_barrier.hpp>
 
@@ -90,7 +91,11 @@ void dequeueThread() {
 }
 
 int runClients() {
+	using float_seconds = std::chrono::duration<double>;
+	int rc = 0;
 	int thread_count = config.Threads - 1;
+	double duration;
+	thread *thread_q;
 
 	vector<struct Thread> threads; /* client thread */
 	threads.resize(thread_count);
@@ -99,14 +104,24 @@ int runClients() {
 	static plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
 	plog::init(config.LogLevel, &consoleAppender);
 	if (ignore_sigpipe() == -1) {
-		LOG_FATAL << "Failed to ignore SIGPIPE, but failed: "
-		          << strerror(errno);
-		return -1;
+		LOG_FATAL << "Failed to ignore SIGPIPE: "
+		          << strerror2(errno, errbuf, ERRBUF_SIZE);
+		GO_LABEL(-1, CLEANUP);
 	}
-	clients = new struct client[config.Workers + config.UWorkers];
+
+	struct addrinfo hint;
+	memset(&hint, 0, sizeof(hint));
+	hint.ai_family = AF_INET;
+	hint.ai_socktype = SOCK_STREAM;
+	if ((rc = getaddrinfo(config.Host.c_str(), config.Port.c_str(), &hint, &config.address)) != 0) {
+		LOG_FATAL << "Failed getaddrinfo: " << gai_strerror(rc);
+		GO_LABEL(-1, CLEANUP);
+	}
+
+	clients = new struct client_t[config.Workers + config.UWorkers];
 	if (clients == NULL) {
 		LOG_FATAL << "Failed to allocate clients memory";
-		return -1;
+		GO_LABEL(-1, CLEANUP);
 	}
 
 	LOG_INFO << "Starting with " << config.Workers << " TCP clients and "
@@ -116,10 +131,11 @@ int runClients() {
 	running_queue.store(true);
 	running.store(true);
 
-	thread *thread_q = new thread(dequeueThread);
+	thread_q = new thread(dequeueThread);
 	queue_wait.wait();
-	if (!running.load())
-		return 1;
+	if (!running.load()) {
+		GO_LABEL(-1, CLEANUP);
+	}
 
 	for (int i = 0; i < thread_count; i++) {
 		threads[i].id = i;
@@ -128,7 +144,8 @@ int runClients() {
 	}
 
 	start = TIME_NOW;
-	std::this_thread::sleep_for(std::chrono::milliseconds(config.Timeout));
+	std::this_thread::sleep_for(float_seconds(config.Timeout));
+
 
 	LOG_INFO << "Shutting down";
 	running.store(false);
@@ -144,8 +161,7 @@ int runClients() {
 	thread_q->join();
 	delete thread_q;
 
-	using float_seconds = std::chrono::duration<double>;
-	auto duration =
+	duration =
 	    std::chrono::duration_cast<float_seconds>(end - start).count();
 	if (duration > 0) {
 		std::cout << std::fixed;
@@ -155,6 +171,7 @@ int runClients() {
 			          << (double) it.second / duration << " op/s)" << std::endl;
 		}
 	}
-
-	return 0;
+CLEANUP:
+	freeaddrinfo(config.address);
+	return rc;
 }
