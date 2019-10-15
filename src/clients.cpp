@@ -55,9 +55,6 @@ static void tcp_timeout_cb(struct ev_loop *loop, struct ev_timer *watcher,
 	    (client_t *) (((char *) watcher) - offsetof(client_t, timer));
 
 	ev_io_stop(loop, &client->watcher);
-	ev_io_set(&client->watcher, -1, 0);
-
-	close(client->watcher.fd);
 
 	if (config.Delay > 0) {
 		ev_timer_init(&client->timer, tcp_reconnect_cb, config.Delay, 0);
