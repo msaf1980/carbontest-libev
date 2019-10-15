@@ -10,6 +10,7 @@
 using std::string;
 
 std::atomic_bool running;
+Config config;
 
 void parseArgs(Config &config, int argc, char *argv[]) {
 	cxxopts::Options options(
@@ -34,7 +35,7 @@ void parseArgs(Config &config, int argc, char *argv[]) {
 		("u,uworkers", "UDP workers", cxxopts::value<int>()->default_value("0"))
 		("m,metrics", "Metrics, sended in one TCP connection",
 	                      cxxopts::value<int>()->default_value("1"))
-		("S,send_delay", "Send delay (in milliseconds)",
+		("D,delay", "Delay between send/connect attempts (in milliseconds)",
 	                      cxxopts::value<int>()->default_value("0"))
 		("c,con_timeout", "Connection timeout (in milliseconds)",
 	                      cxxopts::value<int>()->default_value("100"))
@@ -94,9 +95,9 @@ void parseArgs(Config &config, int argc, char *argv[]) {
 		if (config.MetricPerCon <= 0)
 			throw std::invalid_argument(arg);
 
-		arg = "send_delay";
-		config.SendDelay = result[arg].as<int>();
-		if (config.SendDelay < 0)
+		arg = "delay";
+		config.Delay = result[arg].as<int>();
+		if (config.Delay < 0)
 			throw std::invalid_argument(arg);
 
 		arg = "con_timeout";

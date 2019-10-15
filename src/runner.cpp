@@ -24,14 +24,20 @@ using std::string;
 using std::thread;
 using std::vector;
 
-chrono_clock          start, end;
+chrono_clock start, end;
 map<string, uint64_t> stat_count;
 
 std::atomic_bool running_queue; // running dequeue flag
-SpinningBarrier  queue_wait(2);
+SpinningBarrier queue_wait(2);
 
-void dequeueStat(const Config &config, std::fstream &file,
-                 NetStatQueue &queue) {
+struct Thread {
+	thread *t;
+	int id;
+};
+
+NetStatQueue queue;
+
+void dequeueStat(std::fstream &file) {
 	NetStat stat;
 	while (queue.try_dequeue(stat)) {
 		string name = fmt::format("{}.{}.{}", NetProtoStr[stat.Proto],
@@ -49,7 +55,7 @@ void dequeueStat(const Config &config, std::fstream &file,
 	}
 }
 
-void dequeueThread(const Config &config, NetStatQueue &queue) {
+void dequeueThread() {
 	LOG_VERBOSE << "Starting dequeue thread";
 	try {
 		std::fstream file;
@@ -69,7 +75,7 @@ void dequeueThread(const Config &config, NetStatQueue &queue) {
 
 		queue_wait.wait();
 		while (running_queue.load()) {
-			dequeueStat(config, file, queue);
+			dequeueStat(file);
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 
@@ -83,34 +89,34 @@ void dequeueThread(const Config &config, NetStatQueue &queue) {
 	LOG_VERBOSE << "Shutdown dequeue thread";
 }
 
-struct Thread {
-	thread *t;
-	int     id;
-};
-
-int runClients(const Config &config) {
+int runClients() {
 	int thread_count = config.Threads - 1;
 
 	vector<struct Thread> threads; /* client thread */
 	threads.resize(thread_count);
 
+
 	static plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
 	plog::init(config.LogLevel, &consoleAppender);
 	if (ignore_sigpipe() == -1) {
-		LOG_FATAL << "Failed to ignore SIGPIPE, but failed: " << strerror(errno);
-        exit(1);
-    }
+		LOG_FATAL << "Failed to ignore SIGPIPE, but failed: "
+		          << strerror(errno);
+		return -1;
+	}
+	clients = new struct client[config.Workers + config.UWorkers];
+	if (clients == NULL) {
+		LOG_FATAL << "Failed to allocate clients memory";
+		return -1;
+	}
+
 	LOG_INFO << "Starting with " << config.Workers << " TCP clients and "
 	         << config.UWorkers << " UDP clients";
 	LOG_INFO << "Client thread count " << thread_count;
 
-	NetStatQueue queue;
-
 	running_queue.store(true);
 	running.store(true);
 
-	thread *thread_q =
-	    new thread(dequeueThread, std::ref(config), std::ref(queue));
+	thread *thread_q = new thread(dequeueThread);
 	queue_wait.wait();
 	if (!running.load())
 		return 1;
@@ -118,8 +124,7 @@ int runClients(const Config &config) {
 	for (int i = 0; i < thread_count; i++) {
 		threads[i].id = i;
 		threads[i].t = new thread(clientThread, std::ref(threads[i].id),
-		                          std::ref(thread_count), std::ref(config),
-		                          std::ref(queue));
+		                          std::ref(thread_count));
 	}
 
 	start = TIME_NOW;
@@ -133,6 +138,7 @@ int runClients(const Config &config) {
 		delete threads[i].t;
 	}
 	end = TIME_NOW;
+	delete []clients;
 
 	running_queue.store(false);
 	thread_q->join();
@@ -146,7 +152,7 @@ int runClients(const Config &config) {
 		std::cout << "Test duration " << duration << " s" << std::endl;
 		for (auto &it : stat_count) {
 			std::cout << it.first << ": " << it.second << " ("
-			          << it.second / duration << " op/s)" << std::endl;
+			          << (double) it.second / duration << " op/s)" << std::endl;
 		}
 	}
 

@@ -2,7 +2,10 @@
 #define _RUNNER_HPP_
 
 #include <config.hpp>
+#include <netstat.hpp>
 
-int runClients(const Config &config);
+extern NetStatQueue queue;
+
+int runClients();
 
 #endif /* _RUNNER_HPP_ */

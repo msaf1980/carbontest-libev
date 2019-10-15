@@ -9,8 +9,6 @@
 
 #include <plog/Severity.h>
 
-extern std::atomic_bool running; // running flag
-
 struct Config {
 	std::string Host;
 	int Port;
@@ -25,7 +23,7 @@ struct Config {
 	int UWorkers; // UDP Workers
 
 	// RateLimit    []int32
-	int SendDelay; // Send delay in milliseconds
+	int Delay; // Send/connect delay in milliseconds
 
 	int ConTimeout;  // Connection timeout
 	int Timeout; // Send timeout
@@ -38,5 +36,8 @@ struct Config {
 };
 
 void parseArgs(Config &config, int argc, char *argv[]);
+
+extern std::atomic_bool running; // running flag
+extern Config config;
 
 #endif /* _CONFIG_HPP_ */

@@ -6,7 +6,7 @@ string(REGEX MATCH "MSVC" CMAKE_COMPILER_IS_MSVC "${CMAKE_C_COMPILER_ID}")
 
 if (CMAKE_COMPILER_IS_GNU OR CMAKE_COMPILER_IS_CLANG)
 	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wold-style-cast")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -W -Wpedantic -Wconversion -Wold-style-cast -Wwrite-strings")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -W -Wpedantic -Wconversion -Wwrite-strings")
 	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic -Wconversion")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -W -Wpedantic -Wconversion -Wdeclaration-after-statement -Wwrite-strings")
 	if(ASAN)

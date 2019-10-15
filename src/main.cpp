@@ -6,7 +6,6 @@
 #include "runner.hpp"
 
 int main(int argc, char *argv[]) {
-	Config config;
 	try {
 		parseArgs(config, argc, argv);
 	} catch (std::exception &e) {
@@ -14,5 +13,5 @@ int main(int argc, char *argv[]) {
 		return (1);
 	}
 
-	return runClients(config);
+	return runClients();
 }
