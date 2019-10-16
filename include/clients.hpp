@@ -17,6 +17,7 @@
 
 struct client_t {
 	//int socktype;
+	int fd;
 	char buf[MAX_MESSAGE_LEN];
 	struct ev_loop *loop;
 	ev_io watcher;

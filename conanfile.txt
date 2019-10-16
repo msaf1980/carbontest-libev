@@ -2,6 +2,7 @@
 fmt/5.3.0@bincrafters/stable
 cxxopts/2.2.0@local/stable
 #plog/1.1.4@local/stable
+libev/4.43@local/stable
 #libevfibers/0.4.1-57-g8f0a419@local/stable
 
 [options]

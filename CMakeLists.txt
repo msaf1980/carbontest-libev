@@ -75,8 +75,8 @@ foreach(cmakeFile ${cmakeFiles})
 endforeach(cmakeFile)
 
 set ( LIBRARIES
-    ev
     pthread
+    ${CONAN_LIBS_LIBEV}
     ${CONAN_LIBS_FMT}
 )
 
