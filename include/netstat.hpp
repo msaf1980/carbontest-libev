@@ -5,11 +5,16 @@
 #include <cstdlib>
 
 #include <chrono>
+#include <iostream>
+#include <map>
+#include <string>
 
 #include <concurrentqueue.h>
 
+#include <threads/spinning_barrier.hpp>
+
 enum NetOper { CONNECT, SEND, RECV }; // update NetiOperStr after change this
-extern const char * NetOperStr[];
+extern const char *NetOperStr[];
 
 enum NetErr {
 	OK = 0,
@@ -21,10 +26,10 @@ enum NetErr {
 	RESET,
 	UNREACHEABLE
 }; // update NetErrStr after change this
-extern const char * NetErrStr[];
+extern const char *NetErrStr[];
 
 enum NetProto { TCP = 0, UDP }; // update NetProtoStr after change this
-extern const char * NetProtoStr[];
+extern const char *NetProtoStr[];
 
 // Network operation statistic
 struct NetStat {
@@ -43,7 +48,16 @@ struct QueuePapam : moodycamel::ConcurrentQueueDefaultTraits {
 
 typedef moodycamel::ConcurrentQueue<NetStat, QueuePapam> NetStatQueue;
 
-typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_clock;
+typedef std::chrono::time_point<std::chrono::high_resolution_clock>
+    chrono_clock;
+
+void dequeueStat(std::fstream &file);
+void dequeueThread();
+
+extern NetStatQueue queue;
+extern std::atomic_bool running_queue; // running dequeue flag
+extern SpinningBarrier queue_wait;
+extern std::map<std::string, uint64_t> stat_count;
 
 #define TIME_NOW std::chrono::high_resolution_clock::now()
 

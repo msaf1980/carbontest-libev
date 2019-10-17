@@ -86,7 +86,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 if ( DEFINED DIR_INCLUDES )
     # Includes in separate directory
-    include_directories( ${DIR_INCLUDES} ${fmt_INCLUDE_DIRS} contrib/concurrentqueue contrib/plog/include contrib/c_procs/include contrib/cpp_procs/include )
+    include_directories( ${DIR_INCLUDES} ${fmt_INCLUDE_DIRS} ${cxxopts_INCLUDE_DIRS} contrib/concurrentqueue contrib/plog/include contrib/c_procs/include contrib/cpp_procs/include ../include )
 endif()
 
 #Scan dir for standart source files
@@ -96,6 +96,8 @@ list(APPEND SOURCES
 	contrib/c_procs/src/daemonutils.c
 	contrib/c_procs/src/fileutils.c
 	contrib/cpp_procs/src/threads/spinning_barrier.cpp
+	../src/config.cpp
+	../src/netstat.cpp
 )
 
 #Add sources from dir
