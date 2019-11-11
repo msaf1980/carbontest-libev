@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 #include <concurrentqueue.h>
 
 #include <threads/spinning_barrier.hpp>

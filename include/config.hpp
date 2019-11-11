@@ -9,6 +9,7 @@
 
 #include <atomic>
 #include <string>
+#include <sys/time.h>
 
 #include <plog/Severity.h>
 
@@ -41,6 +42,8 @@ struct Config {
 
 	std::string StatFile; // write connections stat to file
 };
+
+void timeval_set(struct timeval * t, double time);
 
 void parseArgs(Config &config, int argc, char *argv[]);
 
