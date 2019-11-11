@@ -20,9 +20,9 @@ return 0
 
 conan_create_local https://github.com/darcamo/conan-cxxopts conan-cxxopts
 
-conan_create_local https://github.com/msaf1980/conan-libevfibers conan-libevfibers 0.4.1-60-gd9ad92c
+#conan_create_local https://github.com/msaf1980/conan-libevfibers conan-libevfibers 0.4.1-60-gd9ad92c
 
-conan_create_local https://github.com/msaf1980/conan-libev conan-libev 4.43
+#conan_create_local https://github.com/msaf1980/conan-libev conan-libev 4.43
 
 #git clone https://github.com/msaf1980/conan-plog || exit 1
 #cd conan-plog && conan create . local/stable || exit 1
